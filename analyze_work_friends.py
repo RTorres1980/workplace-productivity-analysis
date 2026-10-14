@@ -1,61 +1,101 @@
+"""Friends & Foes Productivity Analyzer.
+
+Reads a daily log of office social activity and reports how helpful friends
+and people to avoid relate to projects completed. Correlation, not causation.
+"""
+from pathlib import Path
+
 import matplotlib
 import pandas as pd
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
-# Load data
-df = pd.read_csv("work_friends_productivity.csv")
+DATA_FILE = Path(__file__).with_name("work_friends_productivity.csv")
 
-print("=== Welcome to the 'Friends & Foes Productivity Analyzer' ===\n")
-print(f"Analyzing {len(df)} days of office social strategy.\n")
+REQUIRED_COLUMNS = [
+    "Date",
+    "Helpful Friends Made",
+    "People to Avoid",
+    "Projects Completed",
+    "Lunch Gossip Sessions",
+]
 
-# Correlation between helpful friends and projects completed
-correlation_friends = df["Helpful Friends Made"].corr(df["Projects Completed"])
-if correlation_friends > 0.5:
-    print(f"✅ Strong finding: More friends = more projects done! Correlation: {correlation_friends:.2f}")
-elif correlation_friends > 0:
-    print(f"🙂 Slight boost: Friends help a little. Correlation: {correlation_friends:.2f}")
-else:
-    print(f"😬 Your friends might be professional time-wasters. Correlation: {correlation_friends:.2f}")
 
-# Correlation between avoiding people and productivity
-correlation_avoid = df["People to Avoid"].corr(df["Projects Completed"])
-if correlation_avoid < 0:
-    print(f"🚀 Avoiding certain people is a productivity booster! Correlation: {correlation_avoid:.2f}")
-else:
-    print(f"🤔 Avoiding people doesn't seem to help... or maybe you avoided the wrong ones. Correlation: {correlation_avoid:.2f}")
+def load_data(path=DATA_FILE):
+    """Load the daily log and check that every required column is present."""
+    df = pd.read_csv(path)
+    missing = [c for c in REQUIRED_COLUMNS if c not in df.columns]
+    if missing:
+        raise ValueError(f"Missing columns: {', '.join(missing)}")
+    return df
 
-# Best friend-making day
-best_friend_day = df.loc[df["Helpful Friends Made"].idxmax(), "Date"]
-print(f"📅 Best Friend-Making Day: {best_friend_day}")
 
-# Worst "People to Avoid" day
-worst_enemy_day = df.loc[df["People to Avoid"].idxmax(), "Date"]
-print(f"🚫 Peak Avoidance Day: {worst_enemy_day} — minimal meetings recommended.")
+def correlation(df, column, target="Projects Completed"):
+    """Pearson correlation between one column and the target."""
+    return df[column].corr(df[target])
 
-# Plot: Friends vs Projects
-plt.figure(figsize=(8,5))
-plt.scatter(df["Helpful Friends Made"], df["Projects Completed"], color="green")
-plt.title("Helpful Friends Made vs Projects Completed")
-plt.xlabel("Helpful Friends Made")
-plt.ylabel("Projects Completed")
-plt.grid(True)
-plt.savefig("friends_vs_projects.png", dpi=120)
-plt.close()
-print("📊 Chart saved: friends_vs_projects.png")
 
-# Plot: People to Avoid vs Projects
-plt.figure(figsize=(8,5))
-plt.scatter(df["People to Avoid"], df["Projects Completed"], color="red")
-plt.title("People to Avoid vs Projects Completed")
-plt.xlabel("People to Avoid")
-plt.ylabel("Projects Completed")
-plt.grid(True)
-plt.savefig("avoid_vs_projects.png", dpi=120)
-plt.close()
-print("📊 Chart saved: avoid_vs_projects.png")
+def friends_verdict(corr):
+    if corr > 0.5:
+        return f"✅ Strong finding: More friends = more projects done! Correlation: {corr:.2f}"
+    if corr > 0:
+        return f"🙂 Slight boost: Friends help a little. Correlation: {corr:.2f}"
+    return f"😬 Your friends might be professional time-wasters. Correlation: {corr:.2f}"
 
-# Fun fact: Lunch gossip
-avg_gossip = df["Lunch Gossip Sessions"].mean()
-print(f"🍔 On average, there were {avg_gossip:.1f} lunch gossip sessions per day. Correlation with productivity unverified.")
+
+def avoid_verdict(corr):
+    if corr < 0:
+        return f"🚀 Avoiding certain people is a productivity booster! Correlation: {corr:.2f}"
+    return (
+        "🤔 Avoiding people doesn't seem to help... or maybe you avoided the wrong ones. "
+        f"Correlation: {corr:.2f}"
+    )
+
+
+def peak_day(df, column):
+    """Date of the day with the highest value in a column (first one on ties)."""
+    return df.loc[df[column].idxmax(), "Date"]
+
+
+def scatter(df, x, path, color):
+    plt.figure(figsize=(8, 5))
+    plt.scatter(df[x], df["Projects Completed"], color=color)
+    plt.title(f"{x} vs Projects Completed")
+    plt.xlabel(x)
+    plt.ylabel("Projects Completed")
+    plt.grid(True)
+    plt.savefig(path, dpi=120)
+    plt.close()
+    return path
+
+
+def main(data_path=DATA_FILE, out_dir=Path(".")):
+    df = load_data(data_path)
+    out_dir = Path(out_dir)
+
+    print("=== Welcome to the 'Friends & Foes Productivity Analyzer' ===\n")
+    print(f"Analyzing {len(df)} days of office social strategy.\n")
+
+    print(friends_verdict(correlation(df, "Helpful Friends Made")))
+    print(avoid_verdict(correlation(df, "People to Avoid")))
+
+    print(f"📅 Best Friend-Making Day: {peak_day(df, 'Helpful Friends Made')}")
+    print(f"🚫 Peak Avoidance Day: {peak_day(df, 'People to Avoid')} — minimal meetings recommended.")
+
+    for x, name, color in [
+        ("Helpful Friends Made", "friends_vs_projects.png", "green"),
+        ("People to Avoid", "avoid_vs_projects.png", "red"),
+    ]:
+        scatter(df, x, out_dir / name, color)
+        print(f"📊 Chart saved: {name}")
+
+    avg_gossip = df["Lunch Gossip Sessions"].mean()
+    print(
+        f"🍔 On average, there were {avg_gossip:.1f} lunch gossip sessions per day. "
+        "Correlation with productivity unverified."
+    )
+
+
+if __name__ == "__main__":
+    main()

@@ -1,5 +1,7 @@
 # 🤝 Friends, Foes & Office Productivity
 
+![CI](https://github.com/RTorres1980/workplace-productivity-analysis/actions/workflows/ci.yml/badge.svg)
+
 This project humorously analyzes how **making the right friends** and **avoiding the wrong people** at work affects your ability to get projects done.
 
 ## 📊 Features
@@ -17,6 +19,10 @@ This project humorously analyzes how **making the right friends** and **avoiding
 2. Run the analysis:
    ```bash
    python analyze_work_friends.py
+   ```
+3. Run the tests:
+   ```bash
+   pytest
    ```
 
 ## 📈 Example Output
