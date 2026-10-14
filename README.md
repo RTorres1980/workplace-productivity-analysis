@@ -12,4 +12,24 @@ This project humorously analyzes how **making the right friends** and **avoiding
 ## 🚀 How to Run
 1. Install Python 3 & dependencies:
    ```bash
-   pip install pandas matplotlib
+   pip install -r requirements.txt
+   ```
+2. Run the analysis:
+   ```bash
+   python analyze_work_friends.py
+   ```
+
+## 📈 Example Output
+
+![Friends vs projects](friends_vs_projects.png)
+
+## 📈 Example Insights
+- More friends = more projects (unless your friends are *too* fun)
+- Avoiding a select few might be the secret to hitting deadlines
+- Lunch gossip sessions remain an under-researched area of productivity science
+
+## 🎯 Goal
+To scientifically (but not really) prove that workplace success is 50% knowing the right people and 50% knowing who to dodge in the hallway.
+
+---
+Made with ☕, 🥪, and the occasional "Let’s circle back next week."
